@@ -47,12 +47,10 @@ type sendTask struct {
 type ConnEvent struct {
 	ConnId    int
 	EventType int
-	Tag       int
-	Session   int
-	Msg       interface{}
+	Msg       []byte
 }
 
-func newConnEvent(et int, connId int, d interface{}) *ConnEvent {
+func newConnEvent(et int, connId int, d []byte) *ConnEvent {
 	return &ConnEvent{
 		EventType: et,
 		ConnId:    connId,
@@ -68,26 +66,22 @@ type FuncSyncExecute func(*ConnEvent) bool
 // Connection is a wrap for net.Conn and process read and write task of the conn
 // When event occurs, it will call the eventQueue to dispatch event
 type Connection struct {
-	ConnId              int
-	StreamProtocol      *StreamProtocol
-	network             *TCPNetwork
-	conn                net.Conn
-	status              int32
-	sendMsgQueue        chan *sendTask
-	sendTimeoutSec      int
-	maxReadBufferLength int
-	userdata            interface{}
-	readTimeoutSec      int
-	fnSyncExecute       FuncSyncExecute
-	disableSend         int32
-	localAddr           string
-	remoteAddr          string
+	ConnId         int
+	network        *TCPNetwork
+	conn           net.Conn
+	status         int32
+	sendMsgQueue   chan *sendTask
+	wrb            *RingBuffer
+	rrb            *RingBuffer
+	userdata       interface{}
+	disableSend    int32
+	readTimeoutSec int
+	sendTimeoutSec int
 }
 
 func newConnection(c net.Conn, sendBufferSize int, t *TCPNetwork, id int) *Connection {
-	return &Connection{
+	cc := &Connection{
 		ConnId:              id,
-		StreamProtocol:      NewStreamProtocol(KStreamProtocol2HeaderLength),
 		network:             t,
 		conn:                c,
 		status:              kConnStatus_None,
@@ -95,11 +89,17 @@ func newConnection(c net.Conn, sendBufferSize int, t *TCPNetwork, id int) *Conne
 		sendTimeoutSec:      kConnConf_DefaultSendTimeoutSec,
 		maxReadBufferLength: kConnConf_MaxReadBufferLength,
 	}
+	cc.wrb = NewRingBuffer(cc)
+	cc.rrb = NewRingBuffer(cc)
+	return cc
 }
 
-func (c *Connection) init() {
-	c.localAddr = c.conn.LocalAddr().String()
-	c.remoteAddr = c.conn.RemoteAddr().String()
+func (c *Connection) localAddr() string {
+	return c.conn.LocalAddr().String()
+}
+
+func (c *Connection) remoteAddr() string {
+	return c.conn.RemoteAddr().String()
 }
 
 //	directly close, packages in queue will not be sent
@@ -199,16 +199,6 @@ func (c *Connection) GetReadTimeoutSec() int {
 	return c.readTimeoutSec
 }
 
-// GetRemoteAddress return the remote address of the connection
-func (c *Connection) GetRemoteAddress() string {
-	return c.remoteAddr
-}
-
-// GetLocalAddress return the local address of the connection
-func (c *Connection) GetLocalAddress() string {
-	return c.localAddr
-}
-
 func (c *Connection) sendRaw(task *sendTask) error {
 	if atomic.LoadInt32(&c.disableSend) != 0 {
 		return kErrConnIsClosed
@@ -235,7 +225,7 @@ func (c *Connection) sendRaw(task *sendTask) error {
 }
 
 // Send the buffer
-func (c *Connection) Send(o interface{}) error {
+func (c *Connection) Send(o []by) error {
 
 	bytes, err := c.StreamProtocol.Serialize(o)
 	if nil != err {
@@ -340,6 +330,11 @@ func (c *Connection) routineSend() error {
 					return nil
 				}
 
+				err = c.wrb.write(evt.data)
+				if nil != err {
+
+				}
+
 				if 0 == evt.flag&KConnFlag_NoHeader {
 					var bytes []byte
 					bytes, err = c.StreamProtocol.Serialize(evt.data)
@@ -370,77 +365,16 @@ func (c *Connection) routineSend() error {
 }
 
 func (c *Connection) routineRead() error {
-	//	default buffer
-	buf := make([]byte, c.maxReadBufferLength)
+
 	var msg []byte
 	var err error
-
 	for {
-
-		// if nil == c.unpacker {
-		// 	msg, err = c.unpack(buf)
-		// } else {
-		// 	msg, err = c.unpacker.Unpack(c, buf)
-		// }
-		// if err != nil {
-		// 	return err
-		// }
-		// if nil == msg {
-		// 	// Empty pstream
-		// 	continue
-		// }
-
-		// //	only push event when the connection is connected
-		// if atomic.LoadInt32(&c.status) == kConnStatus_Connected {
-		// 	//	try to unserialize to pb. do it in each routine to reduce the pressure of worker routine
-		// 	pb := unserializePb(msg)
-		// 	if nil != pb {
-		// 		c.pushPbEvent(pb)
-		// 	} else {
-		// 		c.pushEvent(KConnEvent_Data, msg)
-		// 	}
-		// }
+		msg, err = c.rrb.read()
+		if err == nil {
+			newConnEvent(KConnEvent_Data, c.ConnId, msg)
+			c.network.Push(evt)
+		}
 	}
 
 	return nil
 }
-
-// func (c *Connection) unpack(buf []byte) ([]byte, error) {
-// 	var err error
-// 	//	read head
-// 	c.ApplyReadDeadline()
-// 	headerLength := int(c.streamProtocol.GetHeaderLength())
-// 	if headerLength > len(buf) {
-// 		return nil, fmt.Errorf("Header length %d > buffer length %d", headerLength, len(buf))
-// 	}
-// 	headBuf := buf[:headerLength]
-// 	if _, err = io.ReadFull(c.conn, headBuf); nil != err {
-// 		return nil, err
-// 	}
-
-// 	//	check length
-// 	packetLength := c.streamProtocol.UnserializeHeader(headBuf)
-// 	if packetLength > uint32(c.maxReadBufferLength) ||
-// 		packetLength < c.streamProtocol.GetHeaderLength() {
-// 		return nil, fmt.Errorf("Invalid stream length %d", packetLength)
-// 	}
-// 	if packetLength == c.streamProtocol.GetHeaderLength() {
-// 		// Empty stream ?
-// 		logFatal("Invalid stream length equal to header length")
-// 		return nil, nil
-// 	}
-
-// 	//	read body
-// 	c.ApplyReadDeadline()
-// 	bodyLength := packetLength - c.streamProtocol.GetHeaderLength()
-// 	if _, err = io.ReadFull(c.conn, buf[:bodyLength]); nil != err {
-// 		return nil, err
-// 	}
-
-// 	//	ok
-// 	msg := make([]byte, bodyLength)
-// 	copy(msg, buf[:bodyLength])
-// 	c.ResetReadDeadline()
-
-// 	return msg, nil
-// }
