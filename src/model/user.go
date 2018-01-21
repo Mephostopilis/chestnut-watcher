@@ -1,7 +1,10 @@
 package model
 
 import (
-	"fmt"
+	// "fmt"
+	"github.com/astaxie/beego/orm"
+	"github.com/go-redis/redis"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type User struct {
@@ -17,4 +20,13 @@ type User struct {
 	Diamond  int
 	RCard    int
 	HeadImg  string
+}
+
+func UserLoad(client *redis.Client, o orm.Ormer) error {
+	return KFail
+}
+
+
+func UserSync(client *redis.Client, o orm.Ormer) error {
+	return KFail
 }

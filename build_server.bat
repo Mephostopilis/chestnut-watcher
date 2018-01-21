@@ -1,1 +1,1 @@
-go build -o server.exe src/chat/server/main.go
+go build -o server.exe src/server/main/main.go

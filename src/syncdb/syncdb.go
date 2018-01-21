@@ -12,7 +12,7 @@ import (
 
 func init() {
 	orm.RegisterDriver("mysql", orm.DRMySQL)
-	orm.RegisterDataBase("default", "mysql", "root:123456@tcp(127.0.0.1:3306)/test?charset=utf8")
+	orm.RegisterDataBase("default", "mysql", "root:123456@tcp(127.0.0.1:3306)/default?charset=utf8")
 	orm.RegisterModel(new(model.Count))
 	orm.RegisterModel(new(model.NameId))
 	orm.RegisterModel(new(model.OpenId))
@@ -20,7 +20,7 @@ func init() {
 	orm.RunSyncdb("default", false, true)
 }
 
-func newRedisClient() {
+func NewRedisClient() *redis.Client {
 	client := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
 		Password: "", // no password set
@@ -33,18 +33,21 @@ func newRedisClient() {
 	return client
 }
 
-func newOrm() {
+func NewOrm() orm.Ormer {
 	return orm.NewOrm()
 }
 
-func load(client *redis.Client, o orm.orm) {
+func load(client *redis.Client, o orm.Ormer) {
+	model.CountLoad(client, o)
+	model.NameIdLoad(client, o)
+	model.OpenIdLoad(client, o)
+	model.UserLoad(client, o)
+}
+
+func loadByUid(client *redis.Client, o orm.Ormer, uid int) {
 
 }
 
-func loadByUid(client *redis.Client, o orm.orm, uid int) {
-
-}
-
-func sync(client *redis.Client, o orm.orm) {
+func sync(client *redis.Client, o orm.Ormer) {
 
 }

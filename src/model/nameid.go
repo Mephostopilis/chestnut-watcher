@@ -2,6 +2,9 @@ package model
 
 import (
 	"fmt"
+	"github.com/astaxie/beego/orm"
+	"github.com/go-redis/redis"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type NameId struct {
@@ -9,21 +12,23 @@ type NameId struct {
 	Uid    int
 }
 
-func load(client *redis.Client, o orm.orm) error {
+func NameIdLoad(client *redis.Client, o orm.Ormer) error {
 	var counts []Count
 	num, err := o.Raw("SELECT * FROM count").QueryRows(&counts)
 	if err == nil {
-		for i := 0; i < num; i++ {
+		var i int64 = 0
+		for ; i < num; i++ {
 			count := counts[i]
 			key := fmt.Sprintf("%s:%d:%s", "count", count.Id, "uid")
 			value := fmt.Sprintf("%d", count.Id)
-			client.Set(key, value)
+			client.Set(key, value, 0)
 		}
 	}
 	return err
 }
 
-func sync(client *redis.Client, o orm.orm) error {
-	key := fmt.Sprintf("%s:%s", "count", "id")
-	client.ZRang()
+func NameIdSync(client *redis.Client, o orm.Ormer) error {
+	// key := fmt.Sprintf("%s:%s", "count", "id")
+	// client.ZRang()
+	return KFail
 }
