@@ -64,6 +64,8 @@ func (context *Context) Startup() error {
 
 func (context *Context) Update() error {
 	syncdb.Sync(context.client, context.o)
+	context.Log.Infof("%d", mylog.I)
+	mylog.Log.Infof("%d", mylog.I)
 	return errors.New("h")
 }
 
