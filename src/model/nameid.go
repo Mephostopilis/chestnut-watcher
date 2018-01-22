@@ -8,7 +8,7 @@ import (
 )
 
 type NameId struct {
-	NameId string `orm:"size(100)"`
+	NameId string `orm:"pk;size(100)"`
 	Uid    int
 }
 

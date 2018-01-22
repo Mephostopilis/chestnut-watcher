@@ -37,17 +37,17 @@ func NewOrm() orm.Ormer {
 	return orm.NewOrm()
 }
 
-func load(client *redis.Client, o orm.Ormer) {
+func Load(client *redis.Client, o orm.Ormer) {
 	model.CountLoad(client, o)
 	model.NameIdLoad(client, o)
 	model.OpenIdLoad(client, o)
 	model.UserLoad(client, o)
 }
 
-func loadByUid(client *redis.Client, o orm.Ormer, uid int) {
+func LoadByUid(client *redis.Client, o orm.Ormer, uid int) {
 
 }
 
-func sync(client *redis.Client, o orm.Ormer) {
+func Sync(client *redis.Client, o orm.Ormer) {
 
 }
