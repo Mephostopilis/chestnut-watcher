@@ -1,20 +1,19 @@
 package server
 
 import (
+	// "config"
 	"errors"
 	"gamedef"
 	"github.com/astaxie/beego/orm"
 	"github.com/davyxu/cellnet"
 	"github.com/davyxu/cellnet/socket"
-	"github.com/davyxu/golog"
 	"github.com/go-redis/redis"
 	_ "github.com/go-sql-driver/mysql"
-	"mylog"
+	// "mylog"
 	"syncdb"
 )
 
 type Context struct {
-	Log     *golog.Logger
 	queue   cellnet.EventQueue
 	client  *redis.Client
 	o       orm.Ormer
@@ -23,8 +22,6 @@ type Context struct {
 }
 
 func NewContext() *Context {
-
-	log := golog.New("server")
 
 	client := syncdb.NewRedisClient()
 	o := syncdb.NewOrm()
@@ -35,7 +32,6 @@ func NewContext() *Context {
 	peer.SetName("client")
 
 	context := &Context{
-		Log:     log,
 		client:  client,
 		o:       o,
 		queue:   queue,
@@ -51,21 +47,19 @@ func (context *Context) Queue() cellnet.EventQueue {
 
 func (context *Context) Startup() error {
 	// log.Log.Infoln("Startup")
-
-	context.Log.Infof("%d", mylog.I)
 	cellnet.RegisterMessage(context.peer, "gamedef.EchoReq", func(ev *cellnet.Event) {
 		msg := ev.Msg.(*gamedef.EchoReq)
 		Echo(context, msg)
 	})
 
+	// mylog.Log.Infoln("ready for user.")
+	// config.ReadyForUser(context.o)
 	syncdb.Load(context.client, context.o)
 	return errors.New("h")
 }
 
 func (context *Context) Update() error {
 	syncdb.Sync(context.client, context.o)
-	context.Log.Infof("%d", mylog.I)
-	mylog.Log.Infof("%d", mylog.I)
 	return errors.New("h")
 }
 

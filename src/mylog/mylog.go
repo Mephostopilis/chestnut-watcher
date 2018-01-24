@@ -4,5 +4,4 @@ import (
 	"github.com/davyxu/golog"
 )
 
-var Log *golog.Logger = golog.New("test")
-var I int = 3
+var Log *golog.Logger = golog.New("chestnut-server")

@@ -1,11 +1,11 @@
 package syncdb
 
 import (
-	"fmt"
 	"github.com/astaxie/beego/orm"
 	"github.com/go-redis/redis"
 	_ "github.com/go-sql-driver/mysql"
 	"model"
+	"mylog"
 )
 
 // var client *redis.Client
@@ -28,7 +28,8 @@ func NewRedisClient() *redis.Client {
 	})
 
 	pong, err := client.Ping().Result()
-	fmt.Println(pong, err)
+	mylog.Log.Infoln(pong, err)
+	// fmt.Println(pong, err)
 	// Output: PONG <nil>
 	return client
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/astaxie/beego/orm"
 	"github.com/go-redis/redis"
 	_ "github.com/go-sql-driver/mysql"
+	"mylog"
 )
 
 type Count struct {
@@ -14,18 +15,23 @@ type Count struct {
 }
 
 func CountLoad(client *redis.Client, o orm.Ormer) error {
+	defer func() {
+		if err := recover(); err != nil {
+			mylog.Log.Errorln(err)
+		}
+	}()
+
 	var counts []Count
 	num, err := o.Raw("SELECT * FROM count").QueryRows(&counts)
 	if err == nil {
-		var	i int64
-		i = 0
+		var i int64 = 0
 		for ; i < num; i++ {
 			count := counts[i]
 			key := fmt.Sprintf("%s:%d:%s", "count", count.Id, "uid")
 			value := fmt.Sprintf("%d", count.Id)
 			err = client.Set(key, value, 0).Err()
 			if err != nil {
-				panic(err)
+				mylog.Log.Errorln(err)
 			}
 		}
 	}
