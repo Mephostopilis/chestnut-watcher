@@ -2,7 +2,7 @@ package main
 
 import (
 	"bufio"
-	"chat/gamedef"
+	"gamedef"
 	"github.com/davyxu/cellnet"
 	"github.com/davyxu/cellnet/socket"
 	"github.com/davyxu/golog"

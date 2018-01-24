@@ -18,13 +18,13 @@ func (m *EchoReq) String() string {
 }
 
 type EchoAck struct {
-	Session int
+	Session   int
 	Errorcode int
-	Content string
+	Content   string
 }
 
 func (m *EchoAck) String() string {
-	return goobjfmt.CompactTextString(m)	
+	return goobjfmt.CompactTextString(m)
 }
 
 func init() {
