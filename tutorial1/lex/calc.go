@@ -77,27 +77,34 @@ func (l *Lexer) NextToken() Token {
 	l.skipWhitespace()
 	switch l.ch {
 	case '(':
-		tok = newToken(LPAREN, l.ch)
+		tok = newToken(LPAREN, int(l.ch))
+		break
 	case ')':
-		tok = newToken(RPAREN, l.ch)
+		tok = newToken(RPAREN, int(l.ch))
+		break
 	case '+':
-		tok = newToken(PLUS, l.ch)
+		tok = newToken(PLUS, int(l.ch))
+		break
 	case '-':
-		tok = newToken(MINUS, l.ch)
+		tok = newToken(MINUS, int(l.ch))
+		break
 	case '/':
-		tok = newToken(SLASH, l.ch)
+		tok = newToken(SLASH, int(l.ch))
+		break
 	case '*':
-		tok = newToken(ASTERISK, l.ch)
+		tok = newToken(ASTERISK, int(l.ch))
+		break
 	case '0':
 		tok.Literal = ""
 		tok.Type = EOF
+		break
 	default:
 		if isDigit(l.ch) {
 			tok.Type = INT
 			tok.Literal = l.readNumber()
 			return tok
 		} else {
-			tok = newToken("", "")
+			tok = newToken("", -1)
 		}
 	}
 	l.readChar()

@@ -2,7 +2,7 @@ package parser
 
 import (
 	"bytes"
-	"tutorial1/lex"
+	"gotutorial/tutorial1/lex"
 )
 
 type Expression interface {
@@ -10,7 +10,7 @@ type Expression interface {
 }
 
 type IntegerLiteralExpression struct {
-	Token Token
+	Token lex.Token
 	Value int64
 }
 
@@ -19,7 +19,7 @@ func (il *IntegerLiteralExpression) String() string {
 }
 
 type PrefixExpression struct {
-	Token    Token
+	Token    lex.Token
 	Operator string
 	Right    Expression
 }
@@ -34,7 +34,7 @@ func (pe *PrefixExpression) String() string {
 }
 
 type InfixExpression struct {
-	Token    Token
+	Token    lex.Token
 	Left     Expression
 	Operator string
 	Right    Expression
@@ -56,10 +56,10 @@ type prefixParseFn func()
 type infixParseFn func()
 
 type Parser struct {
-	l              *Lexer
+	l              *lex.Lexer
 	errors         []string
-	curToken       Token
-	peekToken      Token
+	curToken       lex.Token
+	peekToken      lex.Token
 	prefixParseFns map[string]prefixParseFn
 	infixParseFns  map[string]infixParseFn
 }
@@ -73,5 +73,5 @@ func (p *Parser) registerInfix(tokenType string, fn infixParseFn) {
 }
 
 func (p *Parser) ParseExpression(precedence int) Expression {
-
+	return nil
 }
