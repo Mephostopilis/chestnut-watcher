@@ -2,7 +2,8 @@ package parser
 
 import (
 	"bytes"
-	"gotutorial/tutorial1/lex"
+
+	"github.com/mephostopilis/gotutorial/tutorial1/lex"
 )
 
 type Expression interface {

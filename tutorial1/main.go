@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"gotutorial/tutorial1/parser"
+	"github.com/mephostopilis/gotutorial/tutorial1/parser"
 )
 
 func evalPrefixExpression(operator string, right int64) int64 {
